@@ -2,9 +2,9 @@
 set_xmakever("2.7.8")
 
 -- set project
-set_project("template-commonlibsse-ng")
-set_version("0.0.0")
-set_license("MIT")
+set_project("OpenAnimationReplacer-ExamplePlugin")
+set_version("1.0.0")
+set_license("gplv3")
 set_languages("c++20")
 set_optimize("faster")
 set_warnings("allextra", "error")
@@ -25,18 +25,18 @@ add_rules("plugin.vsxmake.autoupdate")
 set_policy("package.requires_lock", true)
 
 -- require packages
-add_requires("commonlibsse-ng", { configs = { skyrim_vr = false } })
+add_requires("commonlibsse-ng", { configs = { skyrim_vr = true } })
 
 -- targets
-target("template-plugin")
+target("OpenAnimationReplacer-ExamplePlugin")
     -- add packages to target
     add_packages("fmt", "spdlog", "commonlibsse-ng")
 
     -- add commonlibsse-ng plugin
     add_rules("@commonlibsse-ng/plugin", {
-        name = "template-plugin",
-        author = "Qudix",
-        description = "SKSE64 plugin template using CommonLibSSE-NG"
+        name = "OpenAnimationReplacer-ExamplePlugin",
+        author = "Ersh",
+        description = "SKSE64 plugin example utilizing OpenAnimationReplacer's API"
     })
 
     -- add src files

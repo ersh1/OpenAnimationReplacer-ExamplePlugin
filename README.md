@@ -1,6 +1,6 @@
-# CommonLibSSE-NG Plugin Template
+# OpenAnimationReplacer-ExamplePlugin
 
-This is a basic plugin template using CommonLibSSE-NG.
+This is a SKSE64 plugin example utilizing Open Animation Replacer's API to add a new custom condition.
 
 ### Requirements
 * [XMake](https://xmake.io) [2.7.8+]
@@ -8,8 +8,8 @@ This is a basic plugin template using CommonLibSSE-NG.
 
 ## Getting Started
 ```bat
-git clone https://github.com/Qudix/template-commonlibsse-ng
-cd template-commonlibsse-ng
+git clone https://github.com/ersh1/OpenAnimationReplacer-ExamplePlugin
+cd OpenAnimationReplacer-ExamplePlugin
 ```
 
 ### Build
@@ -43,6 +43,3 @@ If you want to upgrade the project's dependencies, run the following commands:
 xmake repo --update
 xmake require --upgrade
 ```
-
-## Documentation
-Please refer to the [Wiki](../../wiki/Home) for more advanced topics.

@@ -1,6 +1,8 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/msvc_sink.h>
 
+#include "Conditions.h"
+
 void InitLogging()
 {
 	auto path = logs::log_directory();
@@ -10,79 +12,70 @@ void InitLogging()
 	const auto plugin = SKSE::PluginDeclaration::GetSingleton();
 	*path /= fmt::format("{}.log", plugin->GetName());
 
-	std::vector<spdlog::sink_ptr> sinks{ 
-		std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true), 
-		std::make_shared<spdlog::sinks::msvc_sink_mt>() 
+	std::vector<spdlog::sink_ptr> sinks{
+		std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true),
+		std::make_shared<spdlog::sinks::msvc_sink_mt>()
 	};
 
+#ifndef NDEBUG
+	const auto level = spdlog::level::trace;
+#else
+	const auto level = spdlog::level::info;
+#endif
+
 	auto logger = std::make_shared<spdlog::logger>("global", sinks.begin(), sinks.end());
-	logger->set_level(spdlog::level::info);
-	logger->flush_on(spdlog::level::info);
+	logger->set_level(level);
+	logger->flush_on(level);
 
 	spdlog::set_default_logger(std::move(logger));
 	spdlog::set_pattern("[%^%L%$] %v");
+}
+
+template <typename T>
+void RegisterCondition()
+{
+	auto result = OAR_API::Conditions::AddCustomCondition<T>();
+	switch (result)
+	{
+	case OAR_API::Conditions::APIResult::OK:
+		logs::info("Registered {} condition!", T::CONDITION_NAME);
+		break;
+	case OAR_API::Conditions::APIResult::AlreadyRegistered:
+		logs::warn("Condition {} is already registered!",
+		           T::CONDITION_NAME);
+		break;
+	case OAR_API::Conditions::APIResult::Invalid:
+		logs::error("Condition {} is invalid!", T::CONDITION_NAME);
+		break;
+	case OAR_API::Conditions::APIResult::Failed:
+		logs::error("Failed to register condition {}!", T::CONDITION_NAME);
+		break;
+	}
 }
 
 void InitMessaging()
 {
 	logs::trace("Initializing messaging listener...");
 	const auto intfc = SKSE::GetMessagingInterface();
-	if (!intfc->RegisterListener([](SKSE::MessagingInterface::Message* a_msg) {
-		switch(a_msg->type) {
-			// [Skyrim Lifecycle Events]
-			case SKSE::MessagingInterface::kPostLoad:     // Called after all plugins have finished running SKSEPlugin_Load.
-				// It is now safe to do multithreaded operations, or operations against other plugins.
-				break;
-			case SKSE::MessagingInterface::kPostPostLoad: // Called after all kPostLoad message handlers have run.
-				break;
-			case SKSE::MessagingInterface::kInputLoaded:  // Called when all game data has been found.
-				break;
-			case SKSE::MessagingInterface::kDataLoaded:   // All ESM/ESL/ESP plugins have loaded, main menu is now active.
-				// It is now safe to access form data.
-				RE::ConsoleLog::GetSingleton()->Print("Hello World!");
-				break;
-			// [Skyrim Game Events]
-			case SKSE::MessagingInterface::kNewGame:      // Player starts a new game from main menu.
-				break;
-			case SKSE::MessagingInterface::kPreLoadGame:  // Player selected a game to load, but it hasn't loaded yet.
-				// a_msg->data will be the name of the loaded save.
-				break;
-			case SKSE::MessagingInterface::kPostLoadGame: // Player's selected save game has finished loading.
-				// a_msg->data will be a boolean indicating whether the load was successful.
-				break;
-			case SKSE::MessagingInterface::kSaveGame:     // Player has saved a game.
-				// a_msg->data will be the save name.
-				break;
-			case SKSE::MessagingInterface::kDeleteGame:   // Player deleted a saved game from within the load menu.
-				break;
+	if (!intfc->RegisterListener([](SKSE::MessagingInterface::Message* a_msg)
+	{
+		if (a_msg->type == SKSE::MessagingInterface::kPostLoad)
+		{
+			OAR_API::Conditions::GetAPI(OAR_API::Conditions::InterfaceVersion::V1);
+			if (g_oarConditionsInterface)
+			{
+				RegisterCondition<Conditions::ExampleCondition>();
+				RegisterCondition<Conditions::CompareGraphVariableNiPoint3DotCondition>();
+			}
+			else
+			{
+				logs::error("Failed to request Open Animation Replacer API"sv);
+			}
 		}
-	})) {
+	}))
+	{
 		stl::report_and_fail("Failed to initialize message listener.");
 	}
-
-}
-
-void InitPapyrus()
-{
-	logs::trace("Initializing papyrus bindings...");
-	const auto intfc = SKSE::GetPapyrusInterface();
-	if (!intfc->Register([](RE::BSScript::IVirtualMachine* /*a_vm*/) -> bool {
-		// Register papyrus functions here, or change this lambda to a function
-		return true;
-	})) {
-		stl::report_and_fail("Failed to initialize papyrus bindings.");
-	}
-}
-
-void InitSerialization()
-{
-	logs::trace("Initializing cosave serialization...");
-	// Setup serialization if needed
-	// const auto intfc = SKSE::GetSerializationInterface();
-	// intfc->SetUniqueID('0000');    // Unique ID
-	// intfc->SetSaveCallback(...);   // Function called when saving the game
-	// intfc->SetRevertCallback(...); // Function called when reverting state
-	// intfc->SetLoadCallback(...);   // Function called when loading a save
 }
 
 SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
@@ -94,8 +87,6 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 
 	SKSE::Init(a_skse);
 	InitMessaging();
-	InitPapyrus();
-	InitSerialization();
 
 	logs::info("{} loaded.", plugin->GetName());
 
