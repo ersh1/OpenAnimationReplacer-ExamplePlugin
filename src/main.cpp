@@ -61,7 +61,7 @@ void InitMessaging()
 	{
 		if (a_msg->type == SKSE::MessagingInterface::kPostLoad)
 		{
-			OAR_API::Conditions::GetAPI(OAR_API::Conditions::InterfaceVersion::V1);
+			OAR_API::Conditions::GetAPI(OAR_API::Conditions::InterfaceVersion::V2);
 			if (g_oarConditionsInterface)
 			{
 				RegisterCondition<Conditions::ExampleCondition>();
