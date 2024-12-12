@@ -3,7 +3,8 @@
 namespace Conditions
 {
 	bool ExampleCondition::EvaluateImpl([[maybe_unused]] RE::TESObjectREFR* a_refr,
-	                                    [[maybe_unused]] RE::hkbClipGenerator* a_clipGenerator) const
+	                                    [[maybe_unused]] RE::hkbClipGenerator* a_clipGenerator,
+										[[maybe_unused]] void* a_subMod) const
 	{
 		// put your logic here - return true if the condition is met, false otherwise
 		return true;
@@ -38,7 +39,8 @@ namespace Conditions
 	}
 
 	bool CompareGraphVariableNiPoint3DotCondition::EvaluateImpl([[maybe_unused]] RE::TESObjectREFR* a_refr,
-	                                                            [[maybe_unused]] RE::hkbClipGenerator* a_clipGenerator)
+	                                                            [[maybe_unused]] RE::hkbClipGenerator* a_clipGenerator,
+																[[maybe_unused]] void* a_subMod)
 	const
 	{
 		// run your actual condition logic here - return true if the condition is met, false otherwise

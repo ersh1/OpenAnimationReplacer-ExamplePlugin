@@ -1,94 +1,50 @@
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/msvc_sink.h>
-
 #include "Conditions.h"
-
-void InitLogging()
-{
-	auto path = logs::log_directory();
-	if (!path)
-		return;
-
-	const auto plugin = SKSE::PluginDeclaration::GetSingleton();
-	*path /= fmt::format("{}.log", plugin->GetName());
-
-	std::vector<spdlog::sink_ptr> sinks{
-		std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true),
-		std::make_shared<spdlog::sinks::msvc_sink_mt>()
-	};
-
-#ifndef NDEBUG
-	const auto level = spdlog::level::trace;
-#else
-	const auto level = spdlog::level::info;
-#endif
-
-	auto logger = std::make_shared<spdlog::logger>("global", sinks.begin(), sinks.end());
-	logger->set_level(level);
-	logger->flush_on(level);
-
-	spdlog::set_default_logger(std::move(logger));
-	spdlog::set_pattern("[%^%L%$] %v");
-}
 
 template <typename T>
 void RegisterCondition()
 {
-	auto result = OAR_API::Conditions::AddCustomCondition<T>();
-	switch (result)
+	switch (OAR_API::Conditions::AddCustomCondition<T>())
 	{
-	case OAR_API::Conditions::APIResult::OK:
+		using enum OAR_API::Conditions::APIResult;
+	case OK:
 		logs::info("Registered {} condition!", T::CONDITION_NAME);
 		break;
-	case OAR_API::Conditions::APIResult::AlreadyRegistered:
+	case AlreadyRegistered:
 		logs::warn("Condition {} is already registered!",
 		           T::CONDITION_NAME);
 		break;
-	case OAR_API::Conditions::APIResult::Invalid:
+	case Invalid:
 		logs::error("Condition {} is invalid!", T::CONDITION_NAME);
 		break;
-	case OAR_API::Conditions::APIResult::Failed:
+	case Failed:
 		logs::error("Failed to register condition {}!", T::CONDITION_NAME);
 		break;
 	}
 }
 
-void InitMessaging()
+void OnMessage(SKSE::MessagingInterface::Message* a_msg)
 {
-	logs::trace("Initializing messaging listener...");
-	const auto intfc = SKSE::GetMessagingInterface();
-	if (!intfc->RegisterListener([](SKSE::MessagingInterface::Message* a_msg)
+	if (a_msg->type == SKSE::MessagingInterface::kPostLoad)
 	{
-		if (a_msg->type == SKSE::MessagingInterface::kPostLoad)
+		OAR_API::Conditions::GetAPI(OAR_API::Conditions::InterfaceVersion::V2);
+		if (g_oarConditionsInterface)
 		{
-			OAR_API::Conditions::GetAPI(OAR_API::Conditions::InterfaceVersion::V2);
-			if (g_oarConditionsInterface)
-			{
-				RegisterCondition<Conditions::ExampleCondition>();
-				RegisterCondition<Conditions::CompareGraphVariableNiPoint3DotCondition>();
-			}
-			else
-			{
-				logs::error("Failed to request Open Animation Replacer API"sv);
-			}
+			RegisterCondition<Conditions::ExampleCondition>();
+			RegisterCondition<Conditions::CompareGraphVariableNiPoint3DotCondition>();
 		}
-	}))
-	{
-		stl::report_and_fail("Failed to initialize message listener.");
+		else
+		{
+			logs::error("Failed to request Open Animation Replacer API");
+		}
 	}
 }
 
 SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 {
-	InitLogging();
-
-	const auto plugin = SKSE::PluginDeclaration::GetSingleton();
-	logs::info("{} v{} is loading...", plugin->GetName(), plugin->GetVersion());
-
 	SKSE::Init(a_skse);
-	InitMessaging();
 
-	logs::info("{} loaded.", plugin->GetName());
+	if (const auto intfc = SKSE::GetMessagingInterface())
+		intfc->RegisterListener(OnMessage);
 
 	return true;
 }
