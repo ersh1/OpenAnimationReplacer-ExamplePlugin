@@ -1,4 +1,5 @@
 #pragma once
+
 #include "API/OpenAnimationReplacerAPI-Conditions.h"
 
 namespace Conditions
@@ -17,7 +18,7 @@ namespace Conditions
 
 	protected:
 		// this is the function with the actual condition logic
-		bool EvaluateImpl(RE::TESObjectREFR* a_refr, RE::hkbClipGenerator* a_clipGenerator) const override;
+		bool EvaluateImpl(RE::TESObjectREFR* a_refr, RE::hkbClipGenerator* a_clipGenerator, void* a_subMod) const override;
 	};
 
 	// A more complex example
@@ -48,7 +49,7 @@ namespace Conditions
 
 	protected:
 		// this is the function with the actual condition logic
-		bool EvaluateImpl(RE::TESObjectREFR* a_refr, RE::hkbClipGenerator* a_clipGenerator) const override;
+		bool EvaluateImpl(RE::TESObjectREFR* a_refr, RE::hkbClipGenerator* a_clipGenerator, void* a_subMod) const override;
 
 		// these are the components that you added in the constructor, keep raw pointers to them
 		ITextConditionComponent* textComponent;
