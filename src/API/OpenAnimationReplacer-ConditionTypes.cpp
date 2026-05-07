@@ -30,7 +30,7 @@ namespace Conditions
 	{
 		// workaround for not having a versioning system for conditions in earlier versions
 		ConditionAPIVersion apiVersion = GetConditionAPIVersion();
-		if (apiVersion < ConditionAPIVersion::kNew) {
+		if (apiVersion < ConditionAPIVersion::V3) {
 			return static_cast<ConditionType>(apiVersion);
 		}
 
@@ -39,7 +39,7 @@ namespace Conditions
 
 	EssentialState ICondition::GetEssential() const
 	{
-		if (GetConditionAPIVersion() < ConditionAPIVersion::kNew) {
+		if (GetConditionAPIVersion() < ConditionAPIVersion::V3) {
 			return EssentialState::kEssential;
 		}
 

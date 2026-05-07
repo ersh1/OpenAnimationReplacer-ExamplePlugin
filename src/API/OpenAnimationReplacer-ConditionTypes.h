@@ -35,7 +35,10 @@ namespace Conditions
 		kOld_Custom = 1,
 		kOld_Preset = 2,
 
-		kNew = 3
+		V3 = 3,  // first version with a proper versioning system
+		V4 = 4,
+
+		Latest = V4
 	};
 
 	enum class ConditionType : uint8_t
@@ -139,6 +142,10 @@ namespace Conditions
 	public:
 		[[nodiscard]] virtual EssentialState GetEssentialImpl() const = 0;
 		virtual void SetEssential(EssentialState a_essentialState) = 0;
+
+		// API version 4+ only
+		[[nodiscard]] virtual RE::BSString GetComment() const = 0;
+		virtual void SetComment(const char* a_comment) = 0;
 	};
 
 	// a condition can have many condition components
@@ -404,7 +411,7 @@ namespace Conditions
 		[[nodiscard]] IConditionComponent* GetComponent(uint32_t a_index) const override { return _wrappedCondition->GetComponent(a_index); }
 		IConditionComponent* AddComponent(ConditionComponentFactory a_factory, const char* a_name, const char* a_description = "") override { return _wrappedCondition->AddComponent(a_factory, a_name, a_description); }
 
-		[[nodiscard]] ConditionAPIVersion GetConditionAPIVersion() const override { return ConditionAPIVersion::kNew; }
+		[[nodiscard]] ConditionAPIVersion GetConditionAPIVersion() const override { return ConditionAPIVersion::Latest; }
 		[[nodiscard]] ICondition* GetWrappedCondition() const override { return _wrappedCondition.get(); }
 
 		IConditionComponent* AddBaseComponent(ConditionComponentType a_componentType, const char* a_name, const char* a_description = "");
@@ -431,5 +438,9 @@ namespace Conditions
 	public:
 		[[nodiscard]] EssentialState GetEssentialImpl() const override { return _wrappedCondition->GetEssentialImpl(); }
 		void SetEssential(EssentialState a_essentialState) override { _wrappedCondition->SetEssential(a_essentialState); }
+
+		// API version 4+ only
+		[[nodiscard]] RE::BSString GetComment() const override { return _wrappedCondition->GetComment(); }
+		void SetComment(const char* a_comment) override { _wrappedCondition->SetComment(a_comment); }
 	};
 }
